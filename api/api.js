@@ -1,32 +1,38 @@
+// Settando express
 const express = require("express");
 const app = express();
 const port = process.env.PROJECT_PORT || '3000';
 
-const options = {}
+// Settando banco
+const funcoes = require('./funcoes.js');
+const db = require('./bd.js');
 
-const pgp = require('pg-promise')();
-const connectionString = `postgres://postgres:Carrinhos12@@localhost:5432/projeto-api`;
-const db = pgp(connectionString);
-
-db.connect()
-  .then((obj) => {
-    console.log('Connected to database');
-    obj.done(); // success, release connection;
-  })
-  .catch((error) => {
-    console.error('ERROR:', error.message);
-  });
+funcoes.testarConexao(db);
 
 app.get('/api/users', async function (req, res) {
     
-    let valor;
     try{
-        valor = await db.any('SELECT * FROM users');
+        let valor = await db.any('SELECT * FROM users');
+
         res.send(valor);
     }
     catch (e) {
-        console.log('Deu erro')
+        console.log('Deu erro:', e.message);
+        res.status(400);
+        res.send(e.message);
     }
+})
+
+app.get('/api/users/:id', async function (req, res) {
+  
+  let valor;
+  try{
+      valor = await db.any('SELECT * FROM users');
+      res.send(valor);
+  }
+  catch (e) {
+      console.log('Deu erro')
+  }
 })
 
 
