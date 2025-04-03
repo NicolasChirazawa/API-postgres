@@ -1,4 +1,4 @@
-class User {
+class Usuario {
     constructor(id, nome, endereco, senha) {
         this.id = id;
         this.nome = nome;
@@ -7,4 +7,21 @@ class User {
     }
 }
 
-export default User;
+class RequestSucesso {
+    constructor(statusCode, message, dados){
+        this.status = 'Sucesso';
+        this.statusCode = statusCode;
+        this.message = message;
+        this.dados = dados;
+    }
+}
+
+class RequestFracasso {
+    constructor(statusCode, mensagem){
+        this.status = 'Erro';
+        this.statusCode = statusCode;
+        this.mensagem = mensagem;
+    }
+}
+
+module.exports = { Usuario, RequestSucesso, RequestFracasso };

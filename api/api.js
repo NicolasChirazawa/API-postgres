@@ -4,17 +4,21 @@ const app = express();
 const port = process.env.PROJECT_PORT || '3000';
 
 // Settando banco
-const funcoes = require('./funcoes.js');
+const testarConexao = require('./funcoes.js').testarConexao;
+const enviarErro = require('./funcoes.js').enviarErro;
+
 const db = require('./bd.js');
 
-funcoes.testarConexao(db);
+testarConexao(db);
+
+// Preparando classes
+const requestErro = require('./estruturas.js').RequestFracasso;
 
 app.get('/api/users', async function (req, res) {
     
     try{
-        let valor = await db.any('SELECT * FROM users');
-
-        res.send(valor);
+        let dados_request = await db.any('SELECT * FROM users');
+        res.send(dados_request);
     }
     catch (e) {
         console.log('Deu erro:', e.message);
@@ -24,17 +28,25 @@ app.get('/api/users', async function (req, res) {
 })
 
 app.get('/api/users/:id', async function (req, res) {
-  
-  let valor;
-  try{
-      valor = await db.any('SELECT * FROM users');
-      res.send(valor);
-  }
-  catch (e) {
-      console.log('Deu erro')
-  }
-})
 
+    const user_id = Number(req.params.id);
+
+    // Será um middleware de verificação
+    if(Boolean(id) == false) { 
+        let requisicaoProblema = new requestErro(400, 'ID inválido');
+        return enviarErro(res, requisicaoProblema);
+    }
+
+    let dados_request;
+    try {
+        dados_request = await db.one('SELECT * FROM users WHERE user_id = $1', [user_id])
+    } catch {
+        requisicaoProblema = new requestErro(400, 'ID não existe.');
+        return enviarErro(res, requisicaoProblema);
+    }
+
+    return res.send(dados_request);
+})
 
 app.listen(port, () => {
     console.log(`App de exemplo esta rodando na porta ${port}`)
