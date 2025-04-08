@@ -7,7 +7,7 @@ class Usuario {
     }
 }
 
-class RequestSucesso {
+class RequesicaoSucesso {
     constructor(statusCode, message, dados){
         this.status = 'Sucesso';
         this.statusCode = statusCode;
@@ -16,7 +16,7 @@ class RequestSucesso {
     }
 }
 
-class RequestFracasso {
+class RequesicaoFracasso {
     constructor(statusCode, mensagem){
         this.status = 'Erro';
         this.statusCode = statusCode;
@@ -24,4 +24,4 @@ class RequestFracasso {
     }
 }
 
-module.exports = { Usuario, RequestSucesso, RequestFracasso };
+module.exports = { Usuario, RequesicaoSucesso, RequesicaoFracasso };

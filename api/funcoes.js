@@ -10,9 +10,4 @@ async function testarConexao(banco){
     }
 }
 
-function enviarErro(res, requisicaoProblema){
-  res.status(requisicaoProblema.statusCode);
-  res.send(requisicaoProblema);
-}
-
-module.exports = { testarConexao, enviarErro };
+module.exports = { testarConexao };

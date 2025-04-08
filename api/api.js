@@ -2,17 +2,68 @@
 const express = require("express");
 const app = express();
 const port = process.env.PROJECT_PORT || '3000';
+app.use(express.json());
 
 // Settando banco
-const testarConexao = require('./funcoes.js').testarConexao;
-const enviarErro = require('./funcoes.js').enviarErro;
-
 const db = require('./bd.js');
 
+const testarConexao = require('./funcoes.js').testarConexao;
 testarConexao(db);
 
 // Preparando classes
-const requestErro = require('./estruturas.js').RequestFracasso;
+const RequesicaoErro = require('./estruturas.js').RequesicaoFracasso;
+
+// Falta fazer o teste se já existe
+// Arrumar o db.none
+app.post('/api/users', async function (req, res) {
+    const { nome, senha } = req.body;
+
+    if(nome == undefined || senha == undefined) { 
+        const requisicaoProblema = new RequesicaoErro(400, 'Insira um nome e senha');
+        return res.status(400).send(requisicaoProblema);
+    }
+
+    let erro_user = [];
+    if(nome.search(/[A-Z]/) < 0) {
+        erro_user.push("É necessário uma letra maiúscula");
+    }
+    if(nome.search(/[a-z]/) < 0) {
+        erro_user.push("É necessário uma letra minúscula");
+    }
+
+    let erro_password = [];
+    if(senha.search(/[A-Z]/) < 0) {
+        erro_password.push("É necessário uma letra maiúscula");
+    }
+    if(senha.search(/[a-z]/) < 0) {
+        erro_password.push("É necessário uma letra minúscula");
+    }
+    if(senha.search(/[!@#$%¨&*]/) < 0) {
+        erro_password.push("É necessário ter um símbolo especial");
+    }
+    if(senha.lenght > 5){
+        erro_password.push("É necessário ter pelo menos 5 caracteres");
+    }
+
+    if(erro_user.length > 0 || erro_password.length > 0) {
+        const mensagens = { usuario: erro_user, senha: erro_password }; 
+        const erro_request = new RequesicaoErro(400, mensagens);
+        return res.status(400).send(erro_request);
+    }
+
+    let dados_request;
+    try{
+        dados_request = await db.none({
+            text: 'INSERT INTO users (nome, senha) VALUES ($1, $2)',
+            values: [nome, senha]
+        })
+    } catch {
+        const erro_request = new RequesicaoErro(400, "Não foi possível criar o usuário");
+        return res.status(400).send(erro_request);
+    }
+
+    res.status(201).send(dados_request);
+});
 
 app.get('/api/users', async function (req, res) {
     
@@ -25,27 +76,110 @@ app.get('/api/users', async function (req, res) {
         res.status(400);
         res.send(e.message);
     }
-})
+});
 
 app.get('/api/users/:id', async function (req, res) {
 
     const user_id = Number(req.params.id);
 
     // Será um middleware de verificação
-    if(Boolean(id) == false) { 
-        let requisicaoProblema = new requestErro(400, 'ID inválido');
-        return enviarErro(res, requisicaoProblema);
+    /* Mesma coisa que 'Boolean(user_id) == false' */
+    if(!user_id) { 
+        let requisicaoProblema = new RequesicaoErro(400, 'ID inválido');
+        return res.status(400).send(requisicaoProblema);
     }
 
     let dados_request;
     try {
-        dados_request = await db.one('SELECT * FROM users WHERE user_id = $1', [user_id])
+        dados_request = await db.one({
+            text: 'SELECT * FROM users WHERE user_id = $1', 
+            values: [user_id]
+        })
     } catch {
-        requisicaoProblema = new requestErro(400, 'ID não existe.');
-        return enviarErro(res, requisicaoProblema);
+        requisicaoProblema = new RequesicaoErro(404, 'ID não existe.');
+        return res.status(404).send(requisicaoProblema);
     }
 
-    return res.send(dados_request);
+    return res.status(200).send(dados_request);
+});
+
+app.put('/api/users/:id', async function (req, res) {
+    const user_id = Number(req.params.id);
+    const { nome, senha } = req.body;
+
+    if(!user_id) {
+        const requisicaoProblema = new RequesicaoErro(400, 'ID não é válido');
+        return res.status(400).send(requisicaoProblema);
+    }
+
+    if(nome == undefined || senha == undefined) { 
+        const requisicaoProblema = new RequesicaoErro(400, 'Insira um nome e senha');
+        return res.status(400).send(requisicaoProblema);
+    }
+
+    let erro_user = [];
+    if(nome.search(/[A-Z]/) < 0) {
+        erro_user.push("É necessário uma letra maiúscula");
+    }
+    if(nome.search(/[a-z]/) < 0) {
+        erro_user.push("É necessário uma letra minúscula");
+    }
+
+    let erro_password = [];
+    if(senha.search(/[A-Z]/) < 0) {
+        erro_password.push("É necessário uma letra maiúscula");
+    }
+    if(senha.search(/[a-z]/) < 0) {
+        erro_password.push("É necessário uma letra minúscula");
+    }
+    if(senha.search(/[!@#$%¨&*]/) < 0) {
+        erro_password.push("É necessário ter um símbolo especial");
+    }
+    if(senha.lenght > 5){
+        erro_password.push("É necessário ter pelo menos 5 caracteres");
+    }
+
+    if(erro_user.length > 0 || erro_password.length > 0) {
+        const mensagens = { usuario: erro_user, senha: erro_password }; 
+        const erro_request = new RequesicaoErro(400, mensagens);
+        return res.status(400).send(erro_request);
+    }
+
+    let dados_request;
+    try{
+        dados_request = await db.none({
+            text: 'UPDATE users SET nome = $1, senha = $2 WHERE user_id = $3',
+            values: [nome, senha, user_id]
+        })
+    } catch {
+        const erro_request = new RequesicaoErro(404, "Não foi encontrado o ID do usuário");
+        return res.status(404).send(erro_request);
+    }
+
+    res.status(204).send(dados_request);
+});
+
+app.delete('/api/users/:id', async function (req, res) {
+
+    const user_id = Number(req.params.id);
+
+    if(!user_id){
+        const requisicaoProblema = new RequesicaoErro(400, 'Insira um ID válido');
+        return res.status(400).send(requisicaoProblema);
+    }
+
+    let dados_request;
+    try {
+        dados_request = await db.none({
+            text: 'DELETE FROM users WHERE user_id = $1', 
+            values: [user_id]
+        });
+    } catch {
+        const requisicaoProblema = new RequesicaoErro(404, 'ID não existe.');
+        return res.status(404).send(requisicaoProblema);
+    }
+
+    return res.status(204).send(dados_request);
 })
 
 app.listen(port, () => {
