@@ -2,15 +2,14 @@
 const express = require("express");
 const app = express();
 const port = process.env.PROJECT_PORT || '3000';
+
 app.use(express.json());
 
 // Settando banco
-const db = require('./bd.js');
+const bd = require('./conexao.js');
 
 const testarConexao = require('./funcoes.js').testarConexao;
-testarConexao(db);
-
-const requisicaoFracasso = require('./estruturas.js').RequesicaoFracasso;
+testarConexao(bd);
 
 // Falta fazer o teste se já existe
 // Arrumar o db.none
@@ -29,16 +28,16 @@ app.post('/api/users', async function (req, res) {
 
     let erro_senha = [];
     if(senha.search(/[A-Z]/) < 0) {
-        erro_password.push("É necessário uma letra maiúscula");
+        erro_senha.push("É necessário uma letra maiúscula");
     }
     if(senha.search(/[a-z]/) < 0) {
-        erro_password.push("É necessário uma letra minúscula");
+        erro_senha.push("É necessário uma letra minúscula");
     }
     if(senha.search(/[!@#$%¨&*]/) < 0) {
-        erro_password.push("É necessário ter um símbolo especial");
+        erro_senha.push("É necessário ter um símbolo especial");
     }
     if(senha.lenght > 5){
-        erro_password.push("É necessário ter pelo menos 5 caracteres");
+        erro_senha.push("É necessário ter pelo menos 5 caracteres");
     }
 
     if(erro_user.length > 0 || erro_senha.length > 0) {
@@ -49,15 +48,14 @@ app.post('/api/users', async function (req, res) {
 
     let dados_request;
     try{
-        dados_request = await db.none({
-            text: 'INSERT INTO users (nome, senha) VALUES ($1, $2)',
+        dados_request = await bd.one({
+            text: 'INSERT INTO users (nome, senha) VALUES ($1, $2) RETURNING user_id, nome, senha',
             values: [nome, senha]
         })
     } catch {
         const reqMalSucedido = new requisicaoFracasso(400, "Não foi possível criar o usuário");
         return res.status(400).send(reqMalSucedido);
     }
-
     res.status(201).send(dados_request);
 });
 
@@ -66,7 +64,7 @@ app.get('/api/users', async function (req, res) {
     let dados_request;
 
     try{
-        dados_request = await db.many('SELECT * FROM users');
+        dados_request = await bd.many('SELECT * FROM users');
     }
     catch (e) {
         const reqMalSucedido = new requisicaoFracasso(400, `Ocorreu um erro durante a requisição: ${e.message}`);
@@ -89,7 +87,7 @@ app.get('/api/users/:id', async function (req, res) {
 
     let dados_request;
     try {
-        dados_request = await db.one({
+        dados_request = await bd.one({
             text: 'SELECT * FROM users WHERE user_id = $1', 
             values: [user_id]
         })
@@ -145,8 +143,8 @@ app.put('/api/users/:id', async function (req, res) {
 
     let dados_request;
     try{
-        dados_request = await db.none({
-            text: 'UPDATE users SET nome = $1, senha = $2 WHERE user_id = $3',
+        dados_request = await bd.none({
+            text: 'UPDATE users SET nome = $1, senha = $2 WHERE user_id = $3 RETURNING user_id, nome, senha',
             values: [nome, senha, user_id]
         })
     } catch {
@@ -154,7 +152,7 @@ app.put('/api/users/:id', async function (req, res) {
         return res.status(404).send(reqMalSucedido);
     }
 
-    res.status(204).send(dados_request);
+    res.status(200).send(dados_request);
 });
 
 app.delete('/api/users/:id', async function (req, res) {
@@ -168,7 +166,7 @@ app.delete('/api/users/:id', async function (req, res) {
 
     let dados_request;
     try {
-        dados_request = await db.none({
+        dados_request = await bd.none({
             text: 'DELETE FROM users WHERE user_id = $1', 
             values: [user_id]
         });
@@ -197,12 +195,13 @@ app.patch('/api/users/:id', async function (req, res) {
     let valores_parametros = [];
 
     if(nome != undefined && nome != '') {
-        if(nome.lenght < 5) {
+
+        if(nome.length < 5) {
             erro_user.push("É necessário que o nome tenha pelo menos cinco caracteres");
         }
 
         if(erro_user.length == 0) {
-            textos_parametros.push(`nome = $${textos_parametros.lenght + 1}`);
+            textos_parametros.push(`nome = $${textos_parametros.length + 1}`);
             valores_parametros.push(nome);
         }
     }
@@ -217,44 +216,47 @@ app.patch('/api/users/:id', async function (req, res) {
         if(senha.search(/[!@#$%¨&*]/) < 0) {
             erro_password.push("É necessário ter um símbolo especial");
         }
-        if(senha.lenght > 5){
+        if(senha.length < 5){
             erro_password.push("É necessário ter pelo menos 5 caracteres");
         }
 
         if(erro_password.length == 0) {
-            textos_parametros.push(`senha = $${textos_parametros.lenght + 1}`);
+            textos_parametros.push(`senha = $${textos_parametros.length + 1}`);
             valores_parametros.push(senha);
         }
     }
 
-    if(erro_user > 0 || erro_password > 0) {
+    if(erro_user.length > 0 || erro_password.length > 0) {
         const mensagens = { usuario: erro_user, senha: erro_password }
         const reqMalSucedido = new requisicaoFracasso(400, mensagens);
         return res.status(400).send(reqMalSucedido);
     }
 
-    if(valores_parametros.lenght <= 0) {
+    if(valores_parametros.length == 0) {
         const reqMalSucedido = new requisicaoFracasso(400, 'Não há parâmetros para atualizar');
-        return res.send(400).send(reqMalSucedido);
+        return res.status(400).send(reqMalSucedido);
     }
 
     const parametros = textos_parametros.join(', ');
     valores_parametros.push(user_id);
 
+    let bolacha = valores_parametros;
+
     let dados_request;
     try {
-        dados_request = await db.one ({
+        dados_request = await bd.none ({
             text: `UPDATE users SET ${parametros} WHERE user_id = $${textos_parametros.length + 1}`,
-            values: [valores_parametros]
+            values: valores_parametros
         })
-    } catch {
+    } catch (e) {
+        console.log(e);
+
         const reqMalSucedido = new requisicaoFracasso(400, 'Erro durante a atualização');
-        return res.send(reqMalSucedido);
+        return res.status(400).send(reqMalSucedido);
     }
 
-    res.status(201).send(dados_request);
+    res.status(204).send(dados_request);
 });
-
 
 app.listen(port, () => {
     console.log(`App de exemplo esta rodando na porta ${port}`)
