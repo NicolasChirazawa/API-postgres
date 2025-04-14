@@ -1,19 +1,8 @@
-// Settando express
-const express = require("express");
-const app = express();
-const port = process.env.PROJECT_PORT || '3000';
-
-app.use(express.json());
-
 // Settando banco
 const bd = require('./conexao.js');
 
-const testarConexao = require('./funcoes.js').testarConexao;
-testarConexao(bd);
-
 // Falta fazer o teste se já existe
-// Arrumar o db.none
-app.post('/api/users', async function (req, res) {
+const createUser = (async function (req, res) {
     const { nome, senha } = req.body;
 
     if(nome == undefined || senha == undefined) { 
@@ -59,7 +48,7 @@ app.post('/api/users', async function (req, res) {
     res.status(201).send(dados_request);
 });
 
-app.get('/api/users', async function (req, res) {
+const getAllUsers = (async function (req, res) {
     
     let dados_request;
 
@@ -74,12 +63,12 @@ app.get('/api/users', async function (req, res) {
     return res.send(dados_request);
 });
 
-app.get('/api/users/:id', async function (req, res) {
+const getUser = (async function (req, res) {
 
     const user_id = Number(req.params.id);
 
     // Será um middleware de verificação
-    /* Mesma coisa que 'Boolean(user_id) == false' */
+    // Mesma coisa que 'Boolean(user_id) == false'
     if(!user_id) { 
         let reqMalSucedido = new requisicaoFracasso(400, 'ID inválido');
         return res.status(400).send(reqMalSucedido);
@@ -99,7 +88,7 @@ app.get('/api/users/:id', async function (req, res) {
     return res.status(200).send(dados_request);
 });
 
-app.put('/api/users/:id', async function (req, res) {
+const updateUser = (async function (req, res) {
     const user_id = Number(req.params.id);
     const { nome, senha } = req.body;
 
@@ -155,7 +144,7 @@ app.put('/api/users/:id', async function (req, res) {
     res.status(200).send(dados_request);
 });
 
-app.delete('/api/users/:id', async function (req, res) {
+const deleteUser = (async function (req, res) {
 
     const user_id = Number(req.params.id);
 
@@ -176,9 +165,9 @@ app.delete('/api/users/:id', async function (req, res) {
     }
 
     return res.status(204).send(dados_request);
-})
+});
 
-app.patch('/api/users/:id', async function (req, res) {
+const patchUser = (async function (req, res) {
     
     const user_id = Number(req.params.id);
 
@@ -258,6 +247,5 @@ app.patch('/api/users/:id', async function (req, res) {
     res.status(204).send(dados_request);
 });
 
-app.listen(port, () => {
-    console.log(`App de exemplo esta rodando na porta ${port}`)
-});
+
+module.exports = { createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
