@@ -1,5 +1,6 @@
 // Settando banco
-const bd = require('./conexao.js');
+const bd = require('../conexao.js');
+const requisicaoFracasso = require('./modelos.js').RequesicaoFracasso;
 
 // Falta fazer o teste se já existe
 const createUser = (async function (req, res) {
@@ -103,11 +104,8 @@ const updateUser = (async function (req, res) {
     }
 
     let erro_user = [];
-    if(nome.search(/[A-Z]/) < 0) {
-        erro_user.push("É necessário uma letra maiúscula");
-    }
-    if(nome.search(/[a-z]/) < 0) {
-        erro_user.push("É necessário uma letra minúscula");
+    if(nome.lenght < 5) {
+        erro_user.push("É necessário de pelo menos 5 letras");
     }
 
     let erro_password = [];
@@ -229,8 +227,6 @@ const patchUser = (async function (req, res) {
     const parametros = textos_parametros.join(', ');
     valores_parametros.push(user_id);
 
-    let bolacha = valores_parametros;
-
     let dados_request;
     try {
         dados_request = await bd.none ({
@@ -246,6 +242,5 @@ const patchUser = (async function (req, res) {
 
     res.status(204).send(dados_request);
 });
-
 
 module.exports = { createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
