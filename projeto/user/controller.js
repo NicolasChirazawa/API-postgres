@@ -1,6 +1,10 @@
 // Settando banco
 const bd = require('../conexao.js');
+
 const requisicaoFracasso = require('./modelos.js').RequesicaoFracasso;
+
+const bcrypt = require('bcrypt');
+const saltRound = 10;
 
 // Falta fazer o teste se já existe
 const createUser = (async function (req, res) {
@@ -36,11 +40,13 @@ const createUser = (async function (req, res) {
         return res.status(400).send(reqMalSucedido);
     }
 
+    const senha_hash = await bcrypt.hash(senha, saltRound);
+
     let dados_request;
     try{
         dados_request = await bd.one({
             text: 'INSERT INTO users (nome, senha) VALUES ($1, $2) RETURNING user_id, nome, senha',
-            values: [nome, senha]
+            values: [nome, senha_hash]
         })
     } catch {
         const reqMalSucedido = new requisicaoFracasso(400, "Não foi possível criar o usuário");
@@ -128,11 +134,13 @@ const updateUser = (async function (req, res) {
         return res.status(400).send(reqMalSucedido);
     }
 
+    const senha_hash = await bcrypt.hash(senha, saltRound);
+
     let dados_request;
     try{
-        dados_request = await bd.none({
+        dados_request = await bd.one({
             text: 'UPDATE users SET nome = $1, senha = $2 WHERE user_id = $3 RETURNING user_id, nome, senha',
-            values: [nome, senha, user_id]
+            values: [nome, senha_hash, user_id]
         })
     } catch {
         const reqMalSucedido = new requisicaoFracasso(404, "Não foi encontrado o ID do usuário");
@@ -209,7 +217,10 @@ const patchUser = (async function (req, res) {
 
         if(erro_password.length == 0) {
             textos_parametros.push(`senha = $${textos_parametros.length + 1}`);
-            valores_parametros.push(senha);
+            
+            const senha_hash = await bcrypt.hash(senha, saltRound);
+
+            valores_parametros.push(senha_hash);
         }
     }
 
