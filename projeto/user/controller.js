@@ -6,7 +6,36 @@ const requisicaoFracasso = require('./modelos.js').RequesicaoFracasso;
 const bcrypt = require('bcrypt');
 const saltRound = 10;
 
-// Falta fazer o teste se já existe
+const logUser = (async function (req, res) {
+    const { nome, senha } = req.body;
+    
+    if(nome == undefined || nome == '' || senha == undefined || nome == '') {
+        const reqMalSucedido = new requisicaoFracasso(400, 'Insira um nome e senha válida.')
+        return res.status(400).send(reqMalSucedido);
+    }
+
+    let login_teste;
+    try{
+        login_teste = await bd.one ({
+            text: 'SELECT senha FROM users WHERE nome = $1',
+            values: [nome]
+        });
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(404, 'Usuário e/ou senha incorreto(s).');
+        return res.status(404).send(reqMalSucedido);
+    }
+
+    const senha_hash_teste = await bcrypt.compare(senha, login_teste.senha); 
+
+    if(!senha_hash_teste) {
+        const reqMalSucedido = new requisicaoFracasso(404, 'Usuário e/ou senha incorreto(s).');
+        return res.status(404).send(reqMalSucedido);
+    }
+
+    return res.status(200).send();
+});
+
+// Falta fazer o teste se já existe user com aquele nome
 const createUser = (async function (req, res) {
     const { nome, senha } = req.body;
 
@@ -254,4 +283,4 @@ const patchUser = (async function (req, res) {
     res.status(204).send(dados_request);
 });
 
-module.exports = { createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
+module.exports = { logUser, createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
