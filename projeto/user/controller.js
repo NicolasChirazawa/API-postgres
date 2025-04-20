@@ -3,8 +3,96 @@ const bd = require('../conexao.js');
 
 const requisicaoFracasso = require('./modelos.js').RequesicaoFracasso;
 
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRound = 10;
+
+const verityToken = (async function (req, res, next) {
+    // Response => Bearer / token
+    const authHeader = req.headers['authorization'].split(' ')[1];
+
+    if(authHeader == null || authHeader.split('.').length != 3) { 
+        const reqMalSucedido = new requisicaoFracasso(401, 'É necessário logar antes de usar o endpoint.')
+        return res.status(401).send(reqMalSucedido);
+    }
+
+    let verificacaoToken;
+    try {
+        verificacaoToken = jwt.verify(authHeader, process.env.TOKEN_SEGREDO);
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(403, 'Erro no processo do token');
+        return res.status(403).send(reqMalSucedido);
+    }
+
+    req.dados_token = verificacaoToken;
+    next();
+});
+
+const registerUser = (async function (req, res) {
+    const { nome, senha } = req.body;
+
+    if(nome == undefined || senha == undefined){
+        const reqMalSucedido = new requisicaoFracasso(400, "Preencha o usuário e a senha");
+        return res.status(400).send(reqMalSucedido);
+    }
+
+    let erro_nome = [];
+    if(nome.length < 5) {
+        erro_nome.push("É necessário que o nome tenha pelo menos cinco caracteres");
+    }
+
+    let erro_senha = [];
+    if(senha.search(/[A-Z]/) < 0) {
+        erro_senha.push("É necessário uma letra maiúscula");
+    }
+    if(senha.search(/[a-z]/) < 0) {
+        erro_senha.push("É necessário uma letra minúscula");
+    }
+    if(senha.search(/[!@#$%¨&*]/) < 0) {
+        erro_senha.push("É necessário ter um símbolo especial");
+    }
+    if(senha.length > 5){
+        erro_senha.push("É necessário ter pelo menos 5 caracteres");
+    }
+
+    if(erro_nome.length > 0 || erro_senha.length > 0) {
+        const mensagens = { usuario: erro_nome, senha: erro_senha }; 
+        const reqMalSucedido = new requisicaoFracasso(400, mensagens);
+        return res.status(400).send(reqMalSucedido);
+    }
+
+    const SEM_RESULTADO = [];
+
+    let teste_usuario_nome;
+    try {
+        teste_usuario_nome = await bd.oneOrNone({
+            text: 'SELECT nome FROM users WHERE nome = $1',
+            values: [nome]
+        }) ?? SEM_RESULTADO;
+
+        if(Object.keys(teste_usuario_nome).length > 0) { 
+            throw new Error();
+        }
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(400, 'Já existe um usuário com esse nome');
+        return res.status(400).send(reqMalSucedido);
+    }
+
+    const senha_hash = await bcrypt.hash(senha, saltRound);
+
+    let dados_request;
+    try{
+        dados_request = await bd.one({
+            text: 'INSERT INTO users (nome, senha) VALUES ($1, $2) RETURNING user_id, nome, senha',
+            values: [nome, senha_hash]
+        });
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(400, 'Ocorreu um erro na criação do usuário');
+        res.status(400).send(reqMalSucedido);
+    };
+
+    return res.status(201).send(dados_request);
+});
 
 const logUser = (async function (req, res) {
     const { nome, senha } = req.body;
@@ -14,10 +102,10 @@ const logUser = (async function (req, res) {
         return res.status(400).send(reqMalSucedido);
     }
 
-    let login_teste;
+    let login_select;
     try{
-        login_teste = await bd.one ({
-            text: 'SELECT senha FROM users WHERE nome = $1',
+        login_select = await bd.one ({
+            text: 'SELECT user_id, senha FROM users WHERE nome = $1',
             values: [nome]
         });
     } catch {
@@ -25,14 +113,21 @@ const logUser = (async function (req, res) {
         return res.status(404).send(reqMalSucedido);
     }
 
-    const senha_hash_teste = await bcrypt.compare(senha, login_teste.senha); 
+    const senha_hash_teste = await bcrypt.compare(senha, login_select.senha); 
 
     if(!senha_hash_teste) {
         const reqMalSucedido = new requisicaoFracasso(404, 'Usuário e/ou senha incorreto(s).');
         return res.status(404).send(reqMalSucedido);
     }
 
-    return res.status(200).send();
+    // Criação do token JWT
+    const user_token = jwt.sign (
+        {user_id: login_select.user_id},
+        process.env.TOKEN_SEGREDO,
+        { expiresIn: '1h' }
+    );
+
+    return res.status(200).send({token: user_token});
 });
 
 // Falta fazer o teste se já existe user com aquele nome
@@ -45,7 +140,7 @@ const createUser = (async function (req, res) {
     }
 
     let erro_user = [];
-    if(nome.lenght < 5) {
+    if(nome.length < 5) {
         erro_user.push("É necessário que o nome tenha pelo menos cinco caracteres");
     }
 
@@ -59,7 +154,7 @@ const createUser = (async function (req, res) {
     if(senha.search(/[!@#$%¨&*]/) < 0) {
         erro_senha.push("É necessário ter um símbolo especial");
     }
-    if(senha.lenght > 5){
+    if(senha.length > 5){
         erro_senha.push("É necessário ter pelo menos 5 caracteres");
     }
 
@@ -85,7 +180,8 @@ const createUser = (async function (req, res) {
 });
 
 const getAllUsers = (async function (req, res) {
-    
+    console.log(req.dados_token);
+
     let dados_request;
 
     try{
@@ -139,7 +235,7 @@ const updateUser = (async function (req, res) {
     }
 
     let erro_user = [];
-    if(nome.lenght < 5) {
+    if(nome.length < 5) {
         erro_user.push("É necessário de pelo menos 5 letras");
     }
 
@@ -153,7 +249,7 @@ const updateUser = (async function (req, res) {
     if(senha.search(/[!@#$%¨&*]/) < 0) {
         erro_password.push("É necessário ter um símbolo especial");
     }
-    if(senha.lenght > 5){
+    if(senha.length > 5){
         erro_password.push("É necessário ter pelo menos 5 caracteres");
     }
 
@@ -283,4 +379,4 @@ const patchUser = (async function (req, res) {
     res.status(204).send(dados_request);
 });
 
-module.exports = { logUser, createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
+module.exports = { verityToken, registerUser, logUser, createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
