@@ -2,6 +2,7 @@
 const bd = require('../conexao.js');
 
 const requisicaoFracasso = require('./modelos.js').RequesicaoFracasso;
+const procurarRole = require('./modelos.js').procurarRole;
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -94,7 +95,7 @@ const registerUser = (async function (req, res) {
     return res.status(201).send(dados_request);
 });
 
-const logUser = (async function (req, res) {
+const logInUser = (async function (req, res) {
     const { nome, senha } = req.body;
     
     if(nome == undefined || nome == '' || senha == undefined || nome == '') {
@@ -102,9 +103,9 @@ const logUser = (async function (req, res) {
         return res.status(400).send(reqMalSucedido);
     }
 
-    let login_select;
+    let user_select;
     try{
-        login_select = await bd.one ({
+        user_select = await bd.one ({
             text: 'SELECT user_id, senha FROM users WHERE nome = $1',
             values: [nome]
         });
@@ -113,25 +114,56 @@ const logUser = (async function (req, res) {
         return res.status(404).send(reqMalSucedido);
     }
 
-    const senha_hash_teste = await bcrypt.compare(senha, login_select.senha); 
+    const senha_hash_teste = await bcrypt.compare(senha, user_select.senha); 
 
     if(!senha_hash_teste) {
         const reqMalSucedido = new requisicaoFracasso(404, 'Usuário e/ou senha incorreto(s).');
         return res.status(404).send(reqMalSucedido);
     }
 
+    let role_select;
+    try{
+        role_select = await bd.any ({
+            text: 'SELECT role_id FROM users_roles WHERE user_id = $1 ORDER BY role_id',
+            values: [user_select.user_id]
+        })
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(400, 'Erro na obtenção de roles');
+        return res.status(400).send(reqMalSucedido);
+    }
+
+    let roles = [];
+    for(let i = 0; i < role_select.length; i++){
+        roles[i] = Object.values(role_select[i])[0];
+    }
+
     // Criação do token JWT
     const user_token = jwt.sign (
-        {user_id: login_select.user_id},
+        {
+            user_id: user_select.user_id,
+            roles: roles 
+        },
         process.env.TOKEN_SEGREDO,
         { expiresIn: '1h' }
     );
 
-    return res.status(200).send({token: user_token});
+    return res.status(200).send({auth: true, token: user_token});
 });
 
-// Falta fazer o teste se já existe user com aquele nome
+// Apenas limpa no cliente
+const logOutUser = (async function (req, res) {
+    res.json({ auth: false, token: null })
+});
+
 const createUser = (async function (req, res) {
+    
+    const resultado_busca_role = procurarRole(1, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
+
     const { nome, senha } = req.body;
 
     if(nome == undefined || senha == undefined) { 
@@ -164,6 +196,23 @@ const createUser = (async function (req, res) {
         return res.status(400).send(reqMalSucedido);
     }
 
+    const SEM_RESULTADO = [];
+
+    let teste_usuario_nome;
+    try {
+        teste_usuario_nome = await bd.oneOrNone({
+            text: 'SELECT nome FROM users WHERE nome = $1',
+            values: [nome]
+        }) ?? SEM_RESULTADO;
+
+        if(Object.keys(teste_usuario_nome).length > 0) { 
+            throw new Error();
+        }
+    } catch {
+        const reqMalSucedido = new requisicaoFracasso(400, 'Já existe um usuário com esse nome');
+        return res.status(400).send(reqMalSucedido);
+    }
+
     const senha_hash = await bcrypt.hash(senha, saltRound);
 
     let dados_request;
@@ -180,12 +229,17 @@ const createUser = (async function (req, res) {
 });
 
 const getAllUsers = (async function (req, res) {
-    console.log(req.dados_token);
+
+    const resultado_busca_role = procurarRole(2, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
 
     let dados_request;
-
     try{
-        dados_request = await bd.many('SELECT * FROM users');
+        dados_request = await bd.many('SELECT * FROM users ORDER BY user_id');
     }
     catch (e) {
         const reqMalSucedido = new requisicaoFracasso(400, `Ocorreu um erro durante a requisição: ${e.message}`);
@@ -197,9 +251,15 @@ const getAllUsers = (async function (req, res) {
 
 const getUser = (async function (req, res) {
 
+    const resultado_busca_role = procurarRole(3, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
+
     const user_id = Number(req.params.id);
 
-    // Será um middleware de verificação
     // Mesma coisa que 'Boolean(user_id) == false'
     if(!user_id) { 
         let reqMalSucedido = new requisicaoFracasso(400, 'ID inválido');
@@ -221,6 +281,14 @@ const getUser = (async function (req, res) {
 });
 
 const updateUser = (async function (req, res) {
+    
+    const resultado_busca_role = procurarRole(4, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
+
     const user_id = Number(req.params.id);
     const { nome, senha } = req.body;
 
@@ -249,7 +317,7 @@ const updateUser = (async function (req, res) {
     if(senha.search(/[!@#$%¨&*]/) < 0) {
         erro_password.push("É necessário ter um símbolo especial");
     }
-    if(senha.length > 5){
+    if(senha.length < 5){
         erro_password.push("É necessário ter pelo menos 5 caracteres");
     }
 
@@ -277,6 +345,13 @@ const updateUser = (async function (req, res) {
 
 const deleteUser = (async function (req, res) {
 
+    const resultado_busca_role = procurarRole(5, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
+
     const user_id = Number(req.params.id);
 
     if(!user_id){
@@ -300,6 +375,13 @@ const deleteUser = (async function (req, res) {
 
 const patchUser = (async function (req, res) {
     
+    const resultado_busca_role = procurarRole(6, req.dados_token["roles"]);
+
+    if(!resultado_busca_role) {
+        const reqMalSucedido = new requisicaoFracasso(401, "Não autorizado.")
+        return res.status(401).send(reqMalSucedido);
+    }
+
     const user_id = Number(req.params.id);
 
     if(!user_id){
@@ -379,4 +461,4 @@ const patchUser = (async function (req, res) {
     res.status(204).send(dados_request);
 });
 
-module.exports = { verityToken, registerUser, logUser, createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
+module.exports = { verityToken, registerUser, logInUser, logOutUser, createUser, getAllUsers, getUser, updateUser, deleteUser, patchUser }
