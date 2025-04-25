@@ -6,8 +6,12 @@
 </div>
 
 <h2>💻 Descrição</h2>
-Um estudo para o desenvolvimento de uma API Rest em Node.JS. <br> <br>
-Utilizando-se do JWT para compartilhar informações do cliente de forma segura e de um sistema de 'roles' para o acesso dos endpoints. <br> <br>
+Um estudo para o desenvolvimento de um CRUD com uma API Rest em Node.JS.
+
+<h3>Funcionalidades</h3>
+• As senhas são hasheado antes de serem mandadas ao banco de dados; <br>
+• Utiliza-se do JWT para autenticação e autorização, como também para o compartilhamendo de informações ao cliente de forma segura; <br>
+• O desenvolvimento de um sistema de 'roles' para o acesso dos endpoints que serão apontados na próxima seção; <br>
 
 <h2 name="inicializar">🚀 Iniciando</h2>
 Passos para utilizar deste projeto: <br>
@@ -65,7 +69,7 @@ npm start
 | `GET/users:id`   | Obtém um usuário específico.               |
 | `UPDATE/users:id`| Atualiza todos os atributos de um usuário. |
 | `DELETE/users:id`| Delete um usuário do banco.                |
-| `PATCHusers:id`  | Atualiza atributo(s) de um usuário.        |
+| `PATCH/users:id`  | Atualiza atributo(s) de um usuário.        |
 
 <h3>POST/register</h3>
 
@@ -113,7 +117,7 @@ npm start
 
 
 <h3>POST/users</h3>
-<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
 
 <h4>REQUEST</h4>
 
@@ -138,7 +142,7 @@ npm start
 
 
 <h3>GET/users</h3>
-<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
 
 <h4>RESPONSE</h4>
 
@@ -159,7 +163,7 @@ npm start
 
 
 <h3>GET/users:id</h3>
-<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
 
 <h4>RESPONSE</h4>
 
@@ -175,7 +179,16 @@ npm start
 
 
 <h3>UPDATE/users:id</h3>
-<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
+
+<h4>REQUEST</h4>
+
+```JSON
+{
+  "name": "teste123",
+  "senha": "aA125@"
+}
+```
 
 <h4>RESPONSE</h4>
 
@@ -184,5 +197,26 @@ npm start
   "user_id": 242,
   "name": "teste",
   "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$"
+}
+```
+
+
+
+
+<h3>DELETE/users:id</h3>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
+
+
+
+
+
+<h3>PATCH/users:id</h3>
+<h6>É necessário de token e 'role' para uso desse endpoint.</h6>
+
+<h4>REQUEST</h4>
+
+```JSON
+{
+  "senha": "aA1252ERF@"
 }
 ```
