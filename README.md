@@ -1,0 +1,188 @@
+<div align=center>
+  <img src="https://img.shields.io/static/v1?label=%20&labelColor=fffdaf&message=Javascript&color=grey&style=for-the-badge&logo=javascript&logoColor=black"/>
+  <img src="https://img.shields.io/static/v1?label=%20&labelColor=d1ffbd&message=Node.JS&color=grey&style=for-the-badge&logo=node.js&logoColor=black"/>
+  <img src="https://img.shields.io/static/v1?label=%20&labelColor=white&message=Express.JS&color=grey&style=for-the-badge&logo=express&logoColor=black"/>
+  <img src="https://img.shields.io/static/v1?label=%20&labelColor=9fb6fd&message=Postgres&color=grey&style=for-the-badge&logo=postgreSQL&logoColor=black"/>
+</div>
+
+<h2>💻 Descrição</h2>
+Um estudo para o desenvolvimento de uma API Rest em Node.JS. <br> <br>
+Utilizando-se do JWT para compartilhar informações do cliente de forma segura e de um sistema de 'roles' para o acesso dos endpoints. <br> <br>
+
+<h2 name="inicializar">🚀 Iniciando</h2>
+Passos para utilizar deste projeto: <br>
+
+<div align="center"><h6>/ Instalações dos Softwares / Baixar o projeto / Configurar as variáveis de ambiente / Inicializar o projeto /</h6></div>
+
+
+<h3>Softwares necessários</h3>
+
+• <a href="https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi">Node.JS</a>; <br>
+• <a href="https://code.visualstudio.com/Download">Editor de Código</a> (recomendo VSC); <br>
+• <a href="https://code.visualstudio.com/Download">PostgreSQL</a>; <br>
+<h6>Recomendação: Um API Cliente para manejar as requisições, como o: <a href="https://dl.pstmn.io/download/latest/win64">Postman</a> 
+  ou o <a href="https://updates.insomnia.rest/downloads/windows/latest?app=com.insomnia.app">Insomnia</a>; </h6>
+
+<h3>Meios de acessar o projeto</h3>
+
+<a href=https://github.com/NicolasChirazawa/projeto-yahoo-financas.git>Clone</a> o projeto ou <a href="https://github.com/NicolasChirazawa/projeto-yahoo-financas/archive/refs/heads/main.zip">baixe-o</a>; <br>
+
+```
+gh repo clone NicolasChirazawa/API-postgres
+```
+
+<h3>Definindo as variáveis de ambientes...</h3>
+
+Use o arquivo <b>'.env-teste'</b> de referência para criar o seu próprio <b>'.env'</b>, 
+e defina as seguintes variáveis de acordo a descrição.
+```
+PROJECT_PORT= /* Porta do Projeto */
+
+POSTGRE_USER= /* Configurações do Banco */
+POSTGRE_HOST= /* Configurações do Banco */
+POSTGRE_DATABASE= /* Configurações do Banco */
+POSTGRE_PASSWORD= /* Configurações do Banco */
+POSTGRE_PORT= /* Configurações do Banco */
+
+TOKEN-SECRET= /* Segredo do JWT */
+```
+
+<h3>Como inicializar o projeto?</h3>
+
+Na raiz do projeto basta starttar.
+
+```
+npm start
+```
+<h2>📍 Endpoints API</h2>
+
+| rotas            | descrição                                  |
+| ---------------- | :---:                                      |
+| `POST/register`  | Registra um usuário no sistema.            |
+| `POST/login`     | Entra no sistema.                          |
+| `POST/users`     | Cria um usuário no banco.                  |
+| `GET/users`      | Obtém todos os usuários registrados.       |
+| `GET/users:id`   | Obtém um usuário específico.               |
+| `UPDATE/users:id`| Atualiza todos os atributos de um usuário. |
+| `DELETE/users:id`| Delete um usuário do banco.                |
+| `PATCHusers:id`  | Atualiza atributo(s) de um usuário.        |
+
+<h3>POST/register</h3>
+
+<h4>REQUEST</h4>
+
+```JSON
+{
+  "name": "teste",
+  "senha": "aA125@"
+}
+```
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+  "user_id": 242,
+  "name": "teste",
+  "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$" // Todas as senhas são hasheadas pelo bcrypt
+}
+```
+
+
+
+<h3>POST/login</h3>
+
+<h4>REQUEST</h4>
+
+```JSON
+{
+  "name": "teste",
+  "senha": "aA125@"
+}
+```
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+    "auth": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyNywicm9sZXMiOltdLCJpYXQiOjE3NDU1NDcyNTYsImV4cCI6MTc0NTU1MDg1Nn0.lT2UGWq3EJpSUnAIYr-yDMbmRwc2vBUVOhUizMBbD8o"
+}
+```
+
+
+
+<h3>POST/users</h3>
+<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+
+<h4>REQUEST</h4>
+
+```JSON
+{
+  "name": "teste",
+  "senha": "aA125@"
+}
+```
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+  "user_id": 242,
+  "name": "teste",
+  "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$" // Todas as senhas são hasheadas pelo bcrypt
+}
+```
+
+
+
+
+<h3>GET/users</h3>
+<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+  "user_id": 242,
+  "name": "teste",
+  "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$"
+},
+ {
+  "user_id": 243,
+  "nome": "teste2",
+  "senha": "$liuywerv768orud58ygf95e"
+}...
+```
+
+
+
+
+<h3>GET/users:id</h3>
+<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+  "user_id": 242,
+  "name": "teste",
+  "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$"
+}
+```
+
+
+
+
+<h3>UPDATE/users:id</h3>
+<h6>É necessário de token e permissão para uso desse endpoint.</h6>
+
+<h4>RESPONSE</h4>
+
+```JSON
+{
+  "user_id": 242,
+  "name": "teste",
+  "senha": "uyg$#GHVF@$#Ç(*¨GFC¨$"
+}
+```
