@@ -3,9 +3,13 @@
   <img src="https://img.shields.io/static/v1?label=%20&labelColor=d1ffbd&message=Node.JS&color=grey&style=for-the-badge&logo=node.js&logoColor=black"/>
   <img src="https://img.shields.io/static/v1?label=%20&labelColor=white&message=Express.JS&color=grey&style=for-the-badge&logo=express&logoColor=black"/>
   <img src="https://img.shields.io/static/v1?label=%20&labelColor=9fb6fd&message=Postgres&color=grey&style=for-the-badge&logo=postgreSQL&logoColor=black"/>
+</div> <br>
+
+<div align="center">
+ • <a href=#descricao>Descrição</a> • <a href=#inicializar>Inicializar</a> • <a href=#endpoint>Endpoint</a> • <a href=#bd>Banco de Dados</a> • <a href=#lista_ideais>Lista de Ideias</a> •
 </div>
 
-<h2>💻 Descrição</h2>
+<h2 name="descricao">💻 Descrição</h2>
 Um estudo para o desenvolvimento de um CRUD com uma API Rest em Node.JS.
 
 <h3>Funcionalidades</h3>
@@ -58,7 +62,7 @@ Na raiz do projeto basta starttar.
 ```
 npm start
 ```
-<h2>📍 Endpoints API</h2>
+<h2 name="endpoint">📍 Endpoints API</h2>
 
 | rotas            | descrição                                  |
 | ---------------- | :---:                                      |
@@ -69,7 +73,7 @@ npm start
 | `GET/users:id`   | Obtém um usuário específico.               |
 | `UPDATE/users:id`| Atualiza todos os atributos de um usuário. |
 | `DELETE/users:id`| Delete um usuário do banco.                |
-| `PATCH/users:id`  | Atualiza atributo(s) de um usuário.        |
+| `PATCH/users:id`  | Atualiza atributo(s) de um usuário.       |
 
 <h3>POST/register</h3>
 
@@ -220,3 +224,10 @@ npm start
   "senha": "aA1252ERF@"
 }
 ```
+
+<h2 name="bd">🧱 Banco de dados</h2>
+<img src="https://raw.githubusercontent.com/NicolasChirazawa/API-postgres/refs/heads/main/read_me_images/Modelo-banco.png"/>
+
+<h2 name="lista_ideais">📋 Lista de ideias</h2>
+• Criação do Swagger para documentação da API; <br>
+• Desenvolvimento de testes unitários; <br>
