@@ -33,7 +33,7 @@ Passos para utilizar deste projeto: <br>
 
 <h3>Meios de acessar o projeto</h3>
 
-<a href=https://github.com/NicolasChirazawa/projeto-yahoo-financas.git>Clone</a> o projeto ou <a href="https://github.com/NicolasChirazawa/projeto-yahoo-financas/archive/refs/heads/main.zip">baixe-o</a>; <br>
+<a href="https://github.com/NicolasChirazawa/API-postgres.git">Clone</a> o projeto ou <a href="https://github.com/NicolasChirazawa/API-postgres/archive/refs/heads/main.zip">baixe-o</a>; <br>
 
 ```
 gh repo clone NicolasChirazawa/API-postgres
