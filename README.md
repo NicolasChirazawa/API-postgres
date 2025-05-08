@@ -26,8 +26,8 @@ Passos para utilizar deste projeto: <br>
 <h3>Softwares necessários</h3>
 
 • <a href="https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi">Node.JS</a>; <br>
-• <a href="https://code.visualstudio.com/Download">Editor de Código</a> (recomendo VSC); <br>
 • <a href="https://code.visualstudio.com/Download">PostgreSQL</a>; <br>
+<h6>Recomendação: Um editor de código: <a href="https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user">Visual Studio Code</a>; </h6>
 <h6>Recomendação: Um API Cliente para manejar as requisições, como o: <a href="https://dl.pstmn.io/download/latest/win64">Postman</a> 
   ou o <a href="https://updates.insomnia.rest/downloads/windows/latest?app=com.insomnia.app">Insomnia</a>; </h6>
 
